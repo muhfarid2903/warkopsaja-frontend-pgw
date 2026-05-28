@@ -1944,17 +1944,12 @@
         card.classList.add(getVoucherTierClass(selectedProfile.name));
       } else {
         card.classList.add('voucher-tier-default');
-          document.getElementById('voucher-name').textContent = t('voucher.wifiDefault');
-          document.getElementById('voucher-speed').textContent = '';
-          document.getElementById('voucher-duration').textContent = '';
-        }
-
-        openModal('credentialModal');
-      } catch (err) {
-        console.error('Account creation error:', err);
-        showRecoveryModal(currentOrderId);
+        document.getElementById('voucher-name').textContent = t('voucher.wifiDefault');
+        document.getElementById('voucher-speed').textContent = '';
+        document.getElementById('voucher-duration').textContent = '';
       }
 
+      openModal('credentialModal');
       resetButtons();
     }
 
