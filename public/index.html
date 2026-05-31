@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Warkopsaja — Internet Pulau Balang Lompo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230f7c4d'/><text x='50%25' y='62%25' font-family='sans-serif' font-size='10' font-weight='800' fill='%23fff' text-anchor='middle'>W</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1410,6 +1411,8 @@
         'error.title': 'Failed to load',
         'error.desc': 'Check your connection and try again.',
         'error.retry': 'Try again',
+        'error.mtdown.title': 'Router is offline',
+        'error.mtdown.desc': 'The hotspot router is temporarily unreachable. Please try again in a moment.',
         'cara.title': 'How it works',
         'cara.subtitle': 'Four steps.',
         'cara.step1.title': 'Choose a package',
@@ -1482,6 +1485,7 @@
         'toast.pending': 'Your payment is still pending. Please complete it first!',
         'toast.payError': 'Oh no, the payment failed. Please try again!',
         'toast.txError': 'Oops, failed to create the transaction. Please try again!',
+        'toast.mtdown': 'The hotspot router is temporarily offline. Please try again in a moment.',
         'toast.copySuccess': 'Copied successfully!',
         'toast.copyFail': 'Copy failed. Please copy it manually.',
         'copy.done': '✅ Copied!'
@@ -1509,6 +1513,8 @@
         'error.title': 'Gagal memuat',
         'error.desc': 'Periksa koneksi dan coba lagi.',
         'error.retry': 'Coba lagi',
+        'error.mtdown.title': 'Router sedang offline',
+        'error.mtdown.desc': 'Router hotspot lagi tidak terhubung. Coba lagi sebentar ya.',
         'cara.title': 'Cara pakai',
         'cara.subtitle': 'Empat langkah.',
         'cara.step1.title': 'Pilih paket',
@@ -1581,6 +1587,7 @@
         'toast.pending': 'Pembayaran kamu masih pending ya. Selesaikan dulu pembayarannya!',
         'toast.payError': 'Yah, pembayarannya gagal. Coba lagi ya!',
         'toast.txError': 'Waduh, gagal buat transaksi. Coba lagi ya!',
+        'toast.mtdown': 'Router hotspot lagi offline. Coba lagi sebentar ya.',
         'toast.copySuccess': 'Berhasil di-copy!',
         'toast.copyFail': 'Gagal copy. Salin manual ya.',
         'copy.done': '✅ Udah ke-copy!'
@@ -1675,7 +1682,11 @@
       renderLoadingState();
       try {
         const res = await fetch(`${API_BASE}/profile`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const e = new Error(`HTTP ${res.status}`);
+          e.status = res.status;
+          throw e;
+        }
         profiles = await res.json();
 
         if (profiles.length === 0) {
@@ -1690,10 +1701,13 @@
         renderProfiles(profiles);
       } catch (err) {
         console.error('Failed to load profiles:', err);
+        const mtDown = err.status === 503;
+        const title = mtDown ? t('error.mtdown.title') : t('error.title');
+        const desc = mtDown ? t('error.mtdown.desc') : t('error.desc');
         container.innerHTML = `
           <div class="error-container">
-            <h3>${t('error.title')}</h3>
-            <p>${t('error.desc')}</p>
+            <h3>${title}</h3>
+            <p>${desc}</p>
             <button class="btn-retry" onclick="loadProfiles()">${t('error.retry')}</button>
           </div>`;
       }
@@ -1849,7 +1863,11 @@
           body: JSON.stringify({ profile_id: profileId })
         });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const e = new Error(`HTTP ${res.status}`);
+          e.status = res.status;
+          throw e;
+        }
         const data = await res.json();
 
         currentOrderId = data.transaction_id;  // gateway transaction id
@@ -1871,7 +1889,8 @@
 
       } catch (err) {
         console.error('Purchase error:', err);
-        showToast(t('toast.txError'), 'error');
+        const key = err.status === 503 ? 'toast.mtdown' : 'toast.txError';
+        showToast(t(key), 'error');
         resetButtons();
       }
     }
